@@ -131,46 +131,12 @@ func GetValidKey(ctx context.Context, keys []string, maxGoroutines int, verbose 
 
 	var wg sync.WaitGroup
 
-	// Test the first key
-	wg.Add(1)
-	go func(k string) {
-		defer wg.Done()
-		sem <- struct{}{}
-		defer func() { <-sem }()
-		api := New(k)
-		info, err := api.InfoAccount(ctx, verbose)
-		if err != nil {
-			if verbose {
-				log.Printf("Key %s is invalid: %v\n", k, err)
-			}
-			errChan <- err
-			return
-		}
-		if verbose {
-			log.Printf("Key %s is valid with %d query credits\n", k, info.QueryCredits)
-		}
-		if info.QueryCredits > 0 {
-			mu.Lock()
-			select {
-			case validKeyChan <- k:
-			default:
-			}
-			mu.Unlock()
-		} else {
-			if verbose {
-				log.Printf("Key %s has no query credits\n", k)
-			}
-			errChan <- fmt.Errorf("no query credits")
-		}
-	}(keys[0])
-
-	for i := 1; i < len(keys); i++ {
+	for _, key := range keys {
 		wg.Add(1)
 		go func(k string) {
 			defer wg.Done()
 			sem <- struct{}{}
 			defer func() { <-sem }()
-			time.Sleep(1 * time.Second)
 			api := New(k)
 			info, err := api.InfoAccount(ctx, verbose)
 			if err != nil {
@@ -196,7 +162,8 @@ func GetValidKey(ctx context.Context, keys []string, maxGoroutines int, verbose 
 				}
 				errChan <- fmt.Errorf("no query credits")
 			}
-		}(keys[i])
+		}(key)
+		time.Sleep(1 * time.Second)
 	}
 
 	go func() {
@@ -210,8 +177,13 @@ func GetValidKey(ctx context.Context, keys []string, maxGoroutines int, verbose 
 		return key, nil
 	case <-ctx.Done():
 		return "", ctx.Err()
-	case err := <-errChan:
-		// If all keys are invalid
-		return "", fmt.Errorf("no valid keys available... erro:\n", err)
+	case <-errChan:
+		// Continue waiting for other keys to be validated
+		select {
+		case key := <-validKeyChan:
+			return key, nil
+		default:
+			return "", fmt.Errorf("no valid keys available")
+		}
 	}
 }
