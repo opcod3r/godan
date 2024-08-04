@@ -93,6 +93,8 @@ Here is a detailed example of how to use this tool with all the features enabled
     - Save the found subdomains to `subdomains.txt`
     - Enable verbose output for detailed logging
 
+![](image.png)
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
