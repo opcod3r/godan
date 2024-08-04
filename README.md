@@ -96,7 +96,3 @@ Here is a detailed example of how to use this tool with all the features enabled
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
-
----
-
-Feel free to customize this README file with any additional information or personal touches you prefer.
