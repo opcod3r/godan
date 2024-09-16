@@ -19,7 +19,8 @@ To use this tool, you need to have [Go](https://golang.org/) installed. Clone th
 ```sh
 git clone https://github.com/opcod3r/godan.git
 cd godan
-go build -o godan main.go apishodan.go
+go mod init github.com/opcod3r/godan
+go build -o godan
 ```
 
 ## Usage
